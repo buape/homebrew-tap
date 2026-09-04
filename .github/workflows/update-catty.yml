@@ -21,6 +21,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set release values
         id: release
         run: |
@@ -89,11 +94,6 @@ jobs:
             end
           end
           EOF
-
-      - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@main
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Link checkout as tap
         run: |
