@@ -5,24 +5,24 @@ class Catty < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/buape/catty/releases/download/v0.1.1/catty-0.1.1-darwin-arm64.tar.gz"
-      sha256 "5a1fbc5f6d4d163debced214536e4575df3580262ad94dc338c9dfae33ec9073"
+      url "https://github.com/buape/catty/releases/download/v0.4.0/catty-0.4.0-darwin-arm64.tar.gz"
+      sha256 "6a5b671ebde644af2b8297066a3c1459c8328ff01067cd14ff5691a9375c325a"
     end
 
     on_intel do
-      url "https://github.com/buape/catty/releases/download/v0.1.1/catty-0.1.1-darwin-amd64.tar.gz"
-      sha256 "d6a49b1809db4d846efa4d71c1caea34b550999fe85c6952bb4ce02373c3b2e6"
+      url "https://github.com/buape/catty/releases/download/v0.4.0/catty-0.4.0-darwin-amd64.tar.gz"
+      sha256 "5790fbe1caab71cfc3c7781fe2792f8ca1cfbfdb190d534fb4613312b4c57653"
     end
   end
 
   on_linux do
     on_intel do
-      url "https://github.com/buape/catty/releases/download/v0.1.1/catty-0.1.1-linux-amd64.tar.gz"
-      sha256 "2e0dd46926fed7c4cadf4687dc35ecc2e75c8858458b6569a32a34a7976bf9e7"
+      url "https://github.com/buape/catty/releases/download/v0.4.0/catty-0.4.0-linux-amd64.tar.gz"
+      sha256 "3b2e4af560324df02609266fa0a711e0516d225f93753cd94324f8890f6c464d"
     end
 
     on_arm do
-      disable! date: "2026-07-06", because: "catty does not provide Linux ARM builds"
+      disable! date: "2026-09-04", because: "catty does not provide Linux ARM builds"
     end
   end
 
