@@ -1,7 +1,6 @@
 class Catty < Formula
   desc "Personal assistant agent harness for Discord"
   homepage "https://github.com/buape/catty"
-  version "0.1.1"
   license "MIT"
 
   on_macos do

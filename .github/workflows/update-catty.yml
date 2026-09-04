@@ -55,7 +55,6 @@ jobs:
           class Catty < Formula
             desc "Personal assistant agent harness for Discord"
             homepage "https://github.com/${REPO}"
-            version "${VERSION}"
             license "MIT"
 
             on_macos do
@@ -104,6 +103,8 @@ jobs:
           ln -s "$GITHUB_WORKSPACE" "$tap_dir"
 
       - run: brew audit --strict --formula buape/tap/catty
+        env:
+          HOMEBREW_NO_INSTALL_FROM_API: "1"
 
       - name: Commit formula
         env:

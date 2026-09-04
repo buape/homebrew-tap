@@ -40,3 +40,5 @@ jobs:
       - run: brew style buape/tap
 
       - run: brew audit --strict --formula buape/tap/catty
+        env:
+          HOMEBREW_NO_INSTALL_FROM_API: "1"
