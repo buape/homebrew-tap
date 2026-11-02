@@ -107,7 +107,8 @@ jobs:
             echo "Formula already up to date."
             exit 0
           fi
-          export HEAD_OID="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)"
+          HEAD_OID="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)"
+          export HEAD_OID
           python3 - <<'PY'
           import base64, json, os, pathlib
           payload = {
