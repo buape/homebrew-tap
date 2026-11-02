@@ -1,0 +1,125 @@
+name: update buapedb formula
+
+on:
+  repository_dispatch:
+    types:
+      - buapedb_release
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: buapedb release tag, e.g. v0.1.0
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-buapedb-formula
+  cancel-in-progress: false
+
+jobs:
+  update-buapedb:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.client_payload.tag || inputs.tag }}
+      REPO: ${{ github.event.client_payload.repo || 'buape/buapedb' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate formula
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REPO" == buape/buapedb && "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          VERSION="${TAG#v}"
+          base="https://github.com/${REPO}/releases/download/${TAG}"
+          darwin_arm_url="${base}/buapedb-${VERSION}-darwin-arm64.tar.gz"
+          darwin_amd_url="${base}/buapedb-${VERSION}-darwin-amd64.tar.gz"
+          linux_amd_url="${base}/buapedb-${VERSION}-linux-amd64.tar.gz"
+          darwin_arm_sha="$(curl -fsSL "$darwin_arm_url" | shasum -a 256 | cut -d ' ' -f 1)"
+          darwin_amd_sha="$(curl -fsSL "$darwin_amd_url" | shasum -a 256 | cut -d ' ' -f 1)"
+          linux_amd_sha="$(curl -fsSL "$linux_amd_url" | shasum -a 256 | cut -d ' ' -f 1)"
+          mkdir -p Formula
+          cat > Formula/buapedb.rb <<EOF
+          class Buapedb < Formula
+            desc "Database access for Buape"
+            homepage "https://github.com/${REPO}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "${darwin_arm_url}"
+                sha256 "${darwin_arm_sha}"
+              end
+
+              on_intel do
+                url "${darwin_amd_url}"
+                sha256 "${darwin_amd_sha}"
+              end
+            end
+
+            on_linux do
+              on_intel do
+                url "${linux_amd_url}"
+                sha256 "${linux_amd_sha}"
+              end
+
+              on_arm do
+                disable! date: "$(date +%F)", because: "buapedb does not provide Linux ARM builds"
+              end
+            end
+
+            def install
+              bin.install "buapedb"
+            end
+
+            test do
+              assert_path_exists bin/"buapedb"
+            end
+          end
+          EOF
+
+      - name: Link checkout as tap
+        run: |
+          tap_dir="$(brew --repository)/Library/Taps/buape/homebrew-tap"
+          rm -rf "$tap_dir"
+          mkdir -p "$(dirname "$tap_dir")"
+          ln -s "$GITHUB_WORKSPACE" "$tap_dir"
+
+      - run: brew audit --strict --formula buape/tap/buapedb
+        env:
+          HOMEBREW_NO_INSTALL_FROM_API: "1"
+
+      - name: Commit formula
+        env:
+          GH_TOKEN: ${{ secrets.BUAPEBOT_PAT }}
+        run: |
+          set -euo pipefail
+          git add Formula/buapedb.rb
+          if git diff --cached --quiet -- Formula/buapedb.rb; then
+            echo "Formula already up to date."
+            exit 0
+          fi
+          export HEAD_OID="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)"
+          python3 - <<'PY'
+          import base64, json, os, pathlib
+          payload = {
+              "query": "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid signature { isValid } } } }",
+              "variables": {"input": {
+                  "branch": {"repositoryNameWithOwner": os.environ["GITHUB_REPOSITORY"], "refName": "main"},
+                  "expectedHeadOid": os.environ["HEAD_OID"],
+                  "message": {"headline": "chore: update buapedb to " + os.environ["TAG"]},
+                  "fileChanges": {"additions": [{"path": "Formula/buapedb.rb", "contents": base64.b64encode(pathlib.Path("Formula/buapedb.rb").read_bytes()).decode()}]},
+              }},
+          }
+          pathlib.Path(os.environ["RUNNER_TEMP"], "buapedb-formula-commit.json").write_text(json.dumps(payload))
+          PY
+          gh api graphql --input "$RUNNER_TEMP/buapedb-formula-commit.json" \
+            --jq '.data.createCommitOnBranch.commit.signature.isValid' | grep -qx true
