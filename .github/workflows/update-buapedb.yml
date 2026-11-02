@@ -114,7 +114,7 @@ jobs:
           payload = {
               "query": "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid signature { isValid } } } }",
               "variables": {"input": {
-                  "branch": {"repositoryNameWithOwner": os.environ["GITHUB_REPOSITORY"], "refName": "main"},
+                  "branch": {"repositoryNameWithOwner": os.environ["GITHUB_REPOSITORY"], "branchName": "main"},
                   "expectedHeadOid": os.environ["HEAD_OID"],
                   "message": {"headline": "chore: update buapedb to " + os.environ["TAG"]},
                   "fileChanges": {"additions": [{"path": "Formula/buapedb.rb", "contents": base64.b64encode(pathlib.Path("Formula/buapedb.rb").read_bytes()).decode()}]},
