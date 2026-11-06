@@ -86,11 +86,12 @@ jobs:
             end
 
             def install
-              bin.install "catty"
+              bin.install "catty", "photon_rs_bg.wasm"
             end
 
             test do
               assert_path_exists bin/"catty"
+              assert_path_exists bin/"photon_rs_bg.wasm"
             end
           end
           EOF
